@@ -36,3 +36,16 @@ If you wish to run this application locally on your machine, follow these steps:
    ```bash
    git clone [https://github.com/yourusername/Attendance_Automator.git](https://github.com/yourusername/Attendance_Automator.git)
    cd Attendance_Automator
+   
+## 🧰 Tech Stack
+
+![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
+![Streamlit](https://img.shields.io/badge/Streamlit-FF4B4B?style=for-the-badge&logo=Streamlit&logoColor=white)
+![Pandas](https://img.shields.io/badge/pandas-%23150458.svg?style=for-the-badge&logo=pandas&logoColor=white)
+
+## 🙏 Acknowledgments
+
+This project was developed at the **Centre for Marine And Offhsore Technology Development (CMOTD)**. We gratefully acknowledge their support and resources in making this research and automation tool possible.
+
+<br>
+<img src="CMOTD_LOGO.jpg" alt="CMOTD LOGO" width="400">
