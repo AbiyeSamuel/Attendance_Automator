@@ -8,17 +8,19 @@ st.set_page_config(page_title="Attendance Automator", page_icon="🏫", layout="
 
 st.markdown("""
     <style>
-        /* Light and clean app background */
-        [data-testid="stAppViewContainer"] {
-            background-color: #f8fafc;
+        /* Make the Header font slightly bolder without forcing a specific color */
+        h1 {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-weight: 800;
         }
 
-        /* Style the File Uploader Dropzones */
+        /* Style the File Uploader Dropzones to adapt to both themes */
         [data-testid="stFileUploadDropzone"] {
-            background-color: #ffffff;
             border: 2px dashed #3b82f6;
             border-radius: 12px;
             padding: 20px;
+            /* Using a transparent blue tint so it looks great on both dark and light backgrounds */
+            background-color: rgba(59, 130, 246, 0.05); 
         }
 
         /* Style standard buttons (Generate Report) */
@@ -47,12 +49,6 @@ st.markdown("""
         [data-testid="baseButton-primary"]:hover {
             background-color: #059669;
             box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
-        }
-
-        /* Clean up metric cards */
-        [data-testid="stMetricValue"] {
-            color: #1e293b;
-            font-weight: 800;
         }
     </style>
 """, unsafe_allow_html=True)
