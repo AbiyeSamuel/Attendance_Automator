@@ -45,7 +45,7 @@ If you wish to run this application locally on your machine, follow these steps:
 
 ## 🙏 Acknowledgments
 
-This project was developed at the **Centre for Marine And Offhsore Technology Development (CMOTD)**. We gratefully acknowledge their support and resources in making this research and automation tool possible.
+This project was developed at the **Centre for Marine And Offhsore Technology Development (CMOTD)**. I acknowledge their support and resources in making this research and automation tool possible.
 
 <br>
 <img src="CMOTD_LOGO.jpg" alt="CMOTD LOGO" width="400">
