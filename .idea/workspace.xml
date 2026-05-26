@@ -4,9 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="4566fdf4-dfff-4622-91e8-1308d208ecc0" name="Changes" comment="Edited the UX of the WebAPP">
+    <list default="true" id="4566fdf4-dfff-4622-91e8-1308d208ecc0" name="Changes" comment="Edited the UX of the WebAPP and added more Functionality">
+      <change afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -86,7 +86,7 @@
       <updated>1779376706607</updated>
       <workItem from="1779376707714" duration="12040000" />
       <workItem from="1779700588448" duration="1775000" />
-      <workItem from="1779806682754" duration="2713000" />
+      <workItem from="1779806682754" duration="3472000" />
     </task>
     <task id="LOCAL-00001" summary="Created an example file to test Everything">
       <option name="closed" value="true" />
@@ -128,7 +128,15 @@
       <option name="project" value="LOCAL" />
       <updated>1779700967824</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="Edited the UX of the WebAPP and added more Functionality">
+      <option name="closed" value="true" />
+      <created>1779810144288</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1779810144288</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -151,7 +159,8 @@
     <MESSAGE value="Added the README.md File" />
     <MESSAGE value="Added the LOGO File and Edited README.md File" />
     <MESSAGE value="Edited the UX of the WebAPP" />
-    <option name="LAST_COMMIT_MESSAGE" value="Edited the UX of the WebAPP" />
+    <MESSAGE value="Edited the UX of the WebAPP and added more Functionality" />
+    <option name="LAST_COMMIT_MESSAGE" value="Edited the UX of the WebAPP and added more Functionality" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/Attendance_Automator$app.coverage" NAME="app Coverage Results" MODIFIED="1779808372410" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
