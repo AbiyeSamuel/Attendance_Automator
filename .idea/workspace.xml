@@ -4,9 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="4566fdf4-dfff-4622-91e8-1308d208ecc0" name="Changes" comment="Added a .gitignore">
+    <list default="true" id="4566fdf4-dfff-4622-91e8-1308d208ecc0" name="Changes" comment="UPDATED the app with ew features like the sideBar.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -96,7 +95,7 @@
       <workItem from="1779700588448" duration="1775000" />
       <workItem from="1779806682754" duration="3656000" />
       <workItem from="1780054363389" duration="116000" />
-      <workItem from="1780653633653" duration="7784000" />
+      <workItem from="1780653633653" duration="11313000" />
     </task>
     <task id="LOCAL-00001" summary="Created an example file to test Everything">
       <option name="closed" value="true" />
@@ -154,7 +153,15 @@
       <option name="project" value="LOCAL" />
       <updated>1779810939732</updated>
     </task>
-    <option name="localTasksCounter" value="8" />
+    <task id="LOCAL-00008" summary="UPDATED the app with ew features like the sideBar.">
+      <option name="closed" value="true" />
+      <created>1780669137905</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1780669137905</updated>
+    </task>
+    <option name="localTasksCounter" value="9" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -179,10 +186,11 @@
     <MESSAGE value="Edited the UX of the WebAPP" />
     <MESSAGE value="Edited the UX of the WebAPP and added more Functionality" />
     <MESSAGE value="Added a .gitignore" />
-    <option name="LAST_COMMIT_MESSAGE" value="Added a .gitignore" />
+    <MESSAGE value="UPDATED the app with ew features like the sideBar." />
+    <option name="LAST_COMMIT_MESSAGE" value="UPDATED the app with ew features like the sideBar." />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/Attendance_Automator$newApp.coverage" NAME="newApp Coverage Results" MODIFIED="1780668228591" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/Attendance_Automator$newApp.coverage" NAME="newApp Coverage Results" MODIFIED="1780672613413" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/Attendance_Automator$app.coverage" NAME="app Coverage Results" MODIFIED="1780654351074" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>

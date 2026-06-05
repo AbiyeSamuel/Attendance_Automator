@@ -4,10 +4,17 @@ import datetime
 import io
 import subprocess
 import sys
+import logging
 from openpyxl import load_workbook
-from openpyxl.styles import PatternFill, Font, Alignment, Border, Side
+from openpyxl.styles import PatternFill, Font, Alignment, Border, Side, numbers
 from openpyxl.utils import get_column_letter
 from openpyxl.chart import BarChart, LineChart, PieChart, Reference
+from openpyxl.worksheet.datavalidation import DataValidation
+from openpyxl.formatting.rule import CellIsRule
+
+# --- Logging setup ---
+logging.basicConfig(filename='app.log', level=logging.WARNING,
+                    format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Auto-install missing dependencies
 try:
@@ -60,9 +67,28 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════════════════
-# 2. SIDEBAR — CONFIGURABLE TIME RULES
+# 2. HOW TO USE (collapsible)
+# ══════════════════════════════════════════════════════════════
+with st.expander("📖 How to use this app", expanded=False):
+    st.markdown("""
+    **1. Prepare your files**  
+    - **Biometric logs**: `.dat` files with 3 columns: `ID  YYYY-MM-DD  HH:MM:SS`  
+    - **Student names**: CSV or Excel with columns `Attendance_ID` and `Full_Name`  
+
+    **2. Upload both file types** (use the sidebar to adjust time rules if needed)  
+
+    **3. Click 'Generate Pro Analytics Report'**  
+
+    **4. Download** the full Excel report or a cleaned daily CSV.  
+
+    *Need help? Check that IDs in the logs match the `Attendance_ID` column exactly.*
+    """)
+
+# ══════════════════════════════════════════════════════════════
+# 3. SIDEBAR — CONFIGURABLE TIME RULES
 # ══════════════════════════════════════════════════════════════
 with st.sidebar:
+    st.markdown("# 🏫 Attendance Automator Pro")
     st.header("⏱️ Attendance Time Rules")
     st.caption("Adjust cutoff times to match your class schedule.")
 
@@ -83,9 +109,8 @@ with st.sidebar:
     st.divider()
     report_title = st.text_input("Report Title", value="SHIP DESIGN AND CONSTRUCTION ATTENDANCE REPORT")
 
-
 # ══════════════════════════════════════════════════════════════
-# 3. TIME COMPRESSION ENGINE
+# 4. TIME COMPRESSION ENGINE
 # ══════════════════════════════════════════════════════════════
 def scale_time(time_str: str) -> str:
     if not use_compression:
@@ -111,12 +136,12 @@ def scale_time(time_str: str) -> str:
             return (a_start + new_offset).strftime('%H:%M:%S')
 
         return time_str
-    except Exception:
+    except Exception as e:
+        logging.warning(f"Time compression error for '{time_str}': {e}")
         return time_str
 
-
 # ══════════════════════════════════════════════════════════════
-# 4. GRADING ENGINE (Arrival Based Only)
+# 5. GRADING ENGINE (Arrival Based Only)
 # ══════════════════════════════════════════════════════════════
 def grade_session(compressed_time_str: str, session: str) -> tuple:
     try:
@@ -127,14 +152,14 @@ def grade_session(compressed_time_str: str, session: str) -> tuple:
         else:  # Afternoon Session
             if t <= a_present_cutoff: return 'PRESENT', 0.5
             return 'LATE', 0.25
-    except Exception:
+    except Exception as e:
+        logging.warning(f"Grading error for '{compressed_time_str}' ({session}): {e}")
         return 'ABSENT', 0.0
 
-
 # ══════════════════════════════════════════════════════════════
-# 5. PROFESSIONAL EXCEL STYLING & CHARTS ENGINE
+# 6. PROFESSIONAL EXCEL STYLING & CHARTS ENGINE
 # ══════════════════════════════════════════════════════════════
-def style_workbook(output_bytes: bytes, has_unknown_ids: bool) -> bytes:
+def style_workbook(output_bytes: bytes, has_unknown_ids: bool, generation_time: str) -> bytes:
     BLUE_DARK, BLUE_MID, BLUE_LIGHT = "1E3A5F", "2563EB", "DBEAFE"
     GREEN_DARK, GREEN_LIGHT = "065F46", "D1FAE5"
     AMBER_DARK, AMBER_LIGHT = "92400E", "FEF3C7"
@@ -155,7 +180,16 @@ def style_workbook(output_bytes: bytes, has_unknown_ids: bool) -> bytes:
 
     # ── Sheet : Executive_Summary ────────────────────────────
     ws = wb["Executive_Summary"]
+    ws.sheet_properties.tabColor = "1E3A5F"
     ws.sheet_view.showGridLines = False
+    ws.page_setup.orientation = 'landscape'
+    ws.page_setup.paperSize = ws.PAPERSIZE_A4
+    ws.print_area = f'A1:B{ws.max_row}'
+    ws.page_margins.left = 0.5
+    ws.page_margins.right = 0.5
+    ws.page_margins.top = 0.5
+    ws.page_margins.bottom = 0.5
+
     ws.insert_rows(1, 3)
     ws.merge_cells("A1:B3")
     c = ws["A1"]
@@ -171,6 +205,10 @@ def style_workbook(output_bytes: bytes, has_unknown_ids: bool) -> bytes:
         cell.fill = PatternFill("solid", fgColor=BLUE_MID)
         cell.alignment = Alignment(horizontal="center", vertical="center")
         cell.border = border
+
+    ts_row = ws.max_row + 2
+    ws.cell(row=ts_row, column=1, value="Report generated on:").font = Font(italic=True)
+    ws.cell(row=ts_row, column=2, value=generation_time).font = Font(italic=True)
 
     for row in ws.iter_rows(min_row=5, max_row=ws.max_row, min_col=1, max_col=2):
         for i, cell in enumerate(row):
@@ -193,6 +231,7 @@ def style_workbook(output_bytes: bytes, has_unknown_ids: bool) -> bytes:
 
     # ── Sheet : Delegate_Review ───────────────────────────────
     ws2 = wb["Delegate_Review"]
+    ws2.sheet_properties.tabColor = "2563EB"
     ws2.sheet_view.showGridLines = False
     ws2.freeze_panes = "C2"
 
@@ -203,6 +242,21 @@ def style_workbook(output_bytes: bytes, has_unknown_ids: bool) -> bytes:
     risk_col = next((i + 1 for i, h in enumerate(headers) if h and 'Risk' in str(h)), None)
 
     style_header_row(ws2)
+
+    if overall_col:
+        ws2.conditional_formatting.add(
+            f'{get_column_letter(overall_col)}2:{get_column_letter(overall_col)}{ws2.max_row}',
+            CellIsRule(operator='lessThan', formula=['50'], fill=PatternFill("solid", fgColor="FEE2E2"))
+        )
+
+    if remarks_col:
+        dv = DataValidation(type="list",
+                            formula1='"Medical,Travel,Family Emergency,Other"',
+                            allow_blank=True)
+        dv.error = "Please select a valid reason"
+        dv.errorTitle = "Invalid Remark"
+        ws2.add_data_validation(dv)
+        dv.add(f'{get_column_letter(remarks_col)}2:{get_column_letter(remarks_col)}{ws2.max_row}')
 
     for row_idx, row in enumerate(ws2.iter_rows(min_row=2, max_row=ws2.max_row), start=2):
         bg = GREY_LIGHT if row_idx % 2 == 0 else WHITE
@@ -264,6 +318,7 @@ def style_workbook(output_bytes: bytes, has_unknown_ids: bool) -> bytes:
 
     # ── Sheet : Detailed_Grid ─────────────────────────────────
     ws3 = wb["Detailed_Grid"]
+    ws3.sheet_properties.tabColor = "DBEAFE"
     ws3.sheet_view.showGridLines = False
     ws3.freeze_panes = "C3"
 
@@ -299,6 +354,7 @@ def style_workbook(output_bytes: bytes, has_unknown_ids: bool) -> bytes:
     risk_counts = {"High Risk": 0, "Moderate Risk": 0, "Low Risk": 0}
     if "Risk_Analysis" in wb.sheetnames:
         ws_r = wb["Risk_Analysis"]
+        ws_r.sheet_properties.tabColor = PURPLE
         ws_r.sheet_view.showGridLines = False
         style_header_row(ws_r, color=PURPLE)
         risk_colors = {"High Risk": (RED_DARK, RED_LIGHT), "Moderate Risk": (AMBER_DARK, AMBER_LIGHT),
@@ -339,6 +395,7 @@ def style_workbook(output_bytes: bytes, has_unknown_ids: bool) -> bytes:
     # ── Sheet : Daily_Trend ───────────────────────────────────
     if "Daily_Trend" in wb.sheetnames:
         ws_t = wb["Daily_Trend"]
+        ws_t.sheet_properties.tabColor = GREEN_DARK
         ws_t.sheet_view.showGridLines = False
         style_header_row(ws_t, color=BLUE_DARK)
         for row_idx, row in enumerate(ws_t.iter_rows(min_row=2, max_row=ws_t.max_row), start=2):
@@ -360,6 +417,7 @@ def style_workbook(output_bytes: bytes, has_unknown_ids: bool) -> bytes:
     # ── Sheet : Session_Heatmap ───────────────────────────────
     if "Session_Heatmap" in wb.sheetnames:
         ws_h = wb["Session_Heatmap"]
+        ws_h.sheet_properties.tabColor = AMBER_DARK
         ws_h.sheet_view.showGridLines = False
         style_header_row(ws_h, color=BLUE_DARK)
         for row_idx, row in enumerate(ws_h.iter_rows(min_row=2, max_row=ws_h.max_row), start=2):
@@ -383,6 +441,7 @@ def style_workbook(output_bytes: bytes, has_unknown_ids: bool) -> bytes:
     # ── Sheet : Distribution_Bands ────────────────────────────
     if "Distribution_Bands" in wb.sheetnames:
         ws_d = wb["Distribution_Bands"]
+        ws_d.sheet_properties.tabColor = GREEN_LIGHT
         ws_d.sheet_view.showGridLines = False
         style_header_row(ws_d, color=BLUE_DARK)
         for row_idx, row in enumerate(ws_d.iter_rows(min_row=2, max_row=ws_d.max_row), start=2):
@@ -404,6 +463,7 @@ def style_workbook(output_bytes: bytes, has_unknown_ids: bool) -> bytes:
     # ── Sheet : Unknown_IDs ────────────────────
     if has_unknown_ids and "Unknown_IDs" in wb.sheetnames:
         ws_u = wb["Unknown_IDs"]
+        ws_u.sheet_properties.tabColor = PURPLE
         ws_u.sheet_view.showGridLines = False
         style_header_row(ws_u, color=PURPLE)
         for row in ws_u.iter_rows(min_row=2):
@@ -415,6 +475,7 @@ def style_workbook(output_bytes: bytes, has_unknown_ids: bool) -> bytes:
 
     # ── Sheet : Automated Insights ────────────────────────────
     ws_i = wb.create_sheet("Automated_Insights")
+    ws_i.sheet_properties.tabColor = BLUE_MID
     ws_i.sheet_view.showGridLines = False
     ws_i.column_dimensions['A'].width = 90
 
@@ -452,9 +513,8 @@ def style_workbook(output_bytes: bytes, has_unknown_ids: bool) -> bytes:
     styled.seek(0)
     return styled.read()
 
-
 # ══════════════════════════════════════════════════════════════
-# 6. APP HEADER
+# 7. APP HEADER
 # ══════════════════════════════════════════════════════════════
 st.title("🏫 Weekly Attendance Automator Pro")
 st.markdown(
@@ -465,7 +525,7 @@ st.markdown(
 st.divider()
 
 # ══════════════════════════════════════════════════════════════
-# 7. UPLOAD ZONES
+# 8. UPLOAD ZONES
 # ══════════════════════════════════════════════════════════════
 col1, col2 = st.columns(2)
 with col1:
@@ -481,18 +541,37 @@ with col2:
 
 if uploaded_files and names_file:
 
-    # ── Parse all DAT files ───────────────────────────────────
     raw_records = []
-    for f in uploaded_files:
-        for line in f.getvalue().decode("utf-8", errors='replace').splitlines():
+    malformed_lines = 0
+    total_lines = 0
+    progress_bar = st.progress(0)
+    status_text = st.empty()
+
+    for i, f in enumerate(uploaded_files):
+        status_text.text(f"Parsing file {i+1} of {len(uploaded_files)}: {f.name}")
+        lines = f.getvalue().decode("utf-8", errors='replace').splitlines()
+        total_lines += len(lines)
+        for line in lines:
             parts = line.strip().split()
             if len(parts) >= 3:
-                raw_records.append({
-                    "ID": parts[0].strip(),
-                    "Date": parts[1].strip(),
-                    "Time_Raw": parts[2].strip(),
-                    "Time_Grading": scale_time(parts[2].strip()),
-                })
+                try:
+                    datetime.datetime.strptime(parts[1].strip(), '%Y-%m-%d')
+                    datetime.datetime.strptime(parts[2].strip(), '%H:%M:%S')
+                    raw_records.append({
+                        "ID": parts[0].strip(),
+                        "Date": parts[1].strip(),
+                        "Time_Raw": parts[2].strip(),
+                        "Time_Grading": scale_time(parts[2].strip()),
+                    })
+                except ValueError:
+                    malformed_lines += 1
+            else:
+                malformed_lines += 1
+        progress_bar.progress((i + 1) / len(uploaded_files))
+
+    status_text.text("Parsing complete.")
+    if malformed_lines > 0:
+        st.warning(f"⚠️ {malformed_lines} malformed line(s) skipped out of {total_lines} total.")
 
     if not raw_records:
         st.error("No valid records found in the uploaded .dat files.")
@@ -503,7 +582,6 @@ if uploaded_files and names_file:
         lambda x: 'Morning' if int(x.split(':')[0]) < 13 else 'Afternoon'
     )
 
-    # ── Deduplicate: keep FIRST scan per student/date/session ──
     first_scan = (
         raw_df.sort_values('Time_Raw')
         .drop_duplicates(subset=['ID', 'Date', 'Session'], keep='first')
@@ -515,7 +593,6 @@ if uploaded_files and names_file:
     if st.button("🚀 Generate Pro Analytics Report", use_container_width=True):
         with st.spinner("Processing scans, grading attendance, building analytics..."):
             try:
-                # ── Load names ────────────────────────────────
                 names_df = (
                     pd.read_csv(names_file) if names_file.name.endswith('.csv')
                     else pd.read_excel(names_file)
@@ -524,25 +601,26 @@ if uploaded_files and names_file:
                     st.error("Names file must have columns: `Attendance_ID` and `Full_Name`.")
                     st.stop()
 
+                dup_ids = names_df[names_df['Attendance_ID'].duplicated(keep=False)]
+                if not dup_ids.empty:
+                    st.warning(f"⚠️ Duplicate `Attendance_ID` found: {', '.join(dup_ids['Attendance_ID'].astype(str).unique())}. Only the last occurrence per ID will be used.")
+
                 names_df['Attendance_ID'] = (
                     names_df['Attendance_ID'].astype(str)
                     .str.split('.').str[0].str.strip()
                 )
                 id_to_name = dict(zip(names_df['Attendance_ID'], names_df['Full_Name']))
 
-                # ── Flag unknown IDs ──────────────────────────
                 first_scan['Full_Name'] = first_scan['ID'].map(id_to_name)
                 unknown_df = first_scan[first_scan['Full_Name'].isna()].copy()
                 known_first = first_scan[first_scan['Full_Name'].notna()].copy()
 
-                # ── Grade Morning & Afternoon based on First Arrival ──
                 known_first[['Status', 'Points']] = known_first.apply(
                     lambda row: pd.Series(grade_session(row['Time_Grading'], row['Session'])),
                     axis=1
                 )
                 graded_df = known_first[['ID', 'Full_Name', 'Date', 'Session', 'Status', 'Points', 'Time_Raw']].copy()
 
-                # ── Date & week metadata ──────────────────────
                 all_dates = sorted(graded_df['Date'].unique())
                 total_days = len(all_dates)
 
@@ -559,7 +637,6 @@ if uploaded_files and names_file:
                 all_students['Attendance_ID'] = all_students['Attendance_ID'].astype(str).str.strip()
                 total_delegates = len(all_students)
 
-                # ── Detailed Grid ─────────────────────────────
                 pivot = graded_df.pivot_table(
                     index=['ID', 'Full_Name'],
                     columns=['Date', 'Session'],
@@ -579,7 +656,6 @@ if uploaded_files and names_file:
                 pivot['_s'] = pd.to_numeric(pivot['ID'], errors='coerce')
                 pivot = pivot.sort_values('_s').drop(columns='_s').set_index(['ID', 'Full_Name'])
 
-                # ── Points & weekly breakdown ─────────────────
                 earned = (
                     graded_df.groupby('ID')['Points'].sum()
                     .reset_index().rename(columns={'Points': 'Total Points Earned'})
@@ -598,7 +674,6 @@ if uploaded_files and names_file:
                     .reindex(columns=week_order)
                 )
 
-                # ── Delegate Review ───────────────────────────
                 total_possible = float(total_days)
                 review = all_students.rename(columns={'Attendance_ID': 'ID'}).copy()
                 review['ID'] = review['ID'].astype(str)
@@ -615,14 +690,11 @@ if uploaded_files and names_file:
                 for wk in week_order:
                     review[wk] = (review[wk] * 100).round(1).astype(str) + '%'
 
-
-                # Risk level
                 def risk_level(pts):
                     pct = (pts / total_possible * 100) if total_possible > 0 else 0
                     if pct >= 75:   return "Low Risk"
                     if pct >= 50:   return "Moderate Risk"
                     return "High Risk"
-
 
                 review['Risk Level'] = review['Total Points Earned'].apply(risk_level)
                 review['Remarks / Reason for Low Attendance'] = ''
@@ -637,7 +709,6 @@ if uploaded_files and names_file:
                 )
                 review = review[review_cols]
 
-                # ── Analytics DataFrames ──────────────────────
                 daily_att = (
                         graded_df.groupby('Date')['Points'].sum() /
                         (total_delegates * 1.0) * 100
@@ -647,11 +718,9 @@ if uploaded_files and names_file:
                     'Attendance Rate (%)': daily_att.values.round(1)
                 })
 
-
                 def session_rate(session):
                     s = graded_df[graded_df['Session'] == session].groupby('Date')['Points'].sum()
                     return (s / (total_delegates * 0.5) * 100).reindex(all_dates).fillna(0).round(1)
-
 
                 heatmap_df = pd.DataFrame({
                     'Date': all_dates,
@@ -674,7 +743,6 @@ if uploaded_files and names_file:
 
                 risk_df = review[['ID', 'Full_Name', 'Overall_Performance (%)', 'Risk Level']].copy()
 
-                # Cleaned daily summary CSV
                 morning_merge = graded_df[graded_df['Session'] == 'Morning'][
                     ['ID', 'Date', 'Time_Raw', 'Status', 'Points']].rename(
                     columns={'Time_Raw': 'Morning_Arrival', 'Status': 'Morning_Status', 'Points': 'Morning_Points'})
@@ -702,7 +770,6 @@ if uploaded_files and names_file:
                                    'Afternoon_Arrival', 'Afternoon_Status',
                                    'Daily_Points']].sort_values(['Date', 'ID'])
 
-                # ── Executive Summary ─────────────────────────
                 present_count = int((graded_df['Status'] == 'PRESENT').sum())
                 late_count = int((graded_df['Status'] == 'LATE').sum())
                 absent_count = int(total_delegates * total_days * 2 - len(graded_df))
@@ -740,7 +807,8 @@ if uploaded_files and names_file:
                     ]
                 })
 
-                # ── Write Excel ───────────────────────────────
+                gen_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
                 output = io.BytesIO()
                 with pd.ExcelWriter(output, engine='openpyxl') as writer:
                     summary_df.to_excel(writer, sheet_name='Executive_Summary', index=False)
@@ -758,12 +826,11 @@ if uploaded_files and names_file:
                          .to_excel(writer, sheet_name='Unknown_IDs', index=False))
 
                 styled_bytes = style_workbook(
-                    output.getvalue(), has_unknown_ids=not unknown_df.empty
+                    output.getvalue(), has_unknown_ids=not unknown_df.empty, generation_time=gen_time
                 )
 
-                # ── Streamlit preview ─────────────────────────
                 st.success("✅ Report generated successfully!")
-                st.divider()
+                st.balloons()
 
                 st.subheader("📊 Executive Summary")
                 r1c1, r1c2, r1c3, r1c4 = st.columns(4)
@@ -783,6 +850,34 @@ if uploaded_files and names_file:
                             int((review['Risk Level'] == 'Moderate Risk').sum()))
                 r3c3.metric("🟢 Low Risk",
                             int((review['Risk Level'] == 'Low Risk').sum()))
+
+                st.subheader("📋 Delegate Review (interactive)")
+                review_display = review.copy()
+                review_display['Overall_Performance_Num'] = review_display['Overall_Performance (%)'].str.rstrip('%').astype(float)
+                def color_risk(val):
+                    if val == 'High Risk':
+                        return 'background-color: #FEE2E2; color: #991B1B; font-weight: bold'
+                    elif val == 'Moderate Risk':
+                        return 'background-color: #FEF3C7; color: #92400E; font-weight: bold'
+                    elif val == 'Low Risk':
+                        return 'background-color: #D1FAE5; color: #065F46; font-weight: bold'
+                    return ''
+                styled_review = review_display.style.applymap(color_risk, subset=['Risk Level'])\
+                    .format({'Overall_Performance_Num': '{:.1f}%'})\
+                    .hide(axis=1, subset=['Overall_Performance_Num'])
+                st.dataframe(styled_review, use_container_width=True, height=400)
+
+                st.subheader("🔍 Student Detail View")
+                student_ids = review['ID'].tolist()
+                selected_student = st.selectbox("Select a student to view their daily attendance", student_ids)
+                if selected_student:
+                    student_data = graded_df[graded_df['ID'] == selected_student].copy()
+                    if not student_data.empty:
+                        student_daily = student_data.groupby('Date')['Points'].sum().reindex(all_dates, fill_value=0).reset_index()
+                        student_daily.columns = ['Date', 'Points']
+                        student_daily['Possible'] = 1.0
+                        st.line_chart(student_daily.set_index('Date')['Points'])
+                        st.caption(f"Daily points for {id_to_name.get(selected_student, selected_student)}. 1.0 = both sessions present.")
 
                 with st.expander("📈 View Daily Attendance Trend", expanded=False):
                     st.line_chart(trend_df.set_index('Date')['Attendance Rate (%)'])
@@ -827,6 +922,13 @@ if uploaded_files and names_file:
                         use_container_width=True
                     )
 
+                # ── UPDATED: Feedback via email (mailto link) ──
+                st.divider()
+                st.subheader("📝 Feedback")
+                st.markdown("We'd love to hear your thoughts. Click the button below to send feedback directly to **samuel.abiye@cmotd.org** via your email client.")
+                mailto_link = f"mailto:samuel.abiye@cmotd.org?subject=Attendance%20Automator%20Feedback&body=Please%20enter%20your%20feedback%20below:%0A%0A"
+                st.link_button("✉️ Send Feedback via Email", mailto_link)
+
             except KeyError as e:
                 st.error(
                     f"Column not found: **{e}**. "
@@ -834,4 +936,5 @@ if uploaded_files and names_file:
                 )
             except Exception as e:
                 st.error(f"Unexpected error: {e}")
+                logging.exception("Unhandled exception during report generation")
                 raise
