@@ -499,7 +499,7 @@ def style_workbook(output_bytes: bytes, has_unknown_ids: bool, generation_time: 
     ws_i.cell(row=row + 1, column=1, value="RECOMMENDED ACTION ITEMS:").font = Font(name="Segoe UI", bold=True, size=12)
     row += 2
     recos = [
-        "• Send formal warning letters to all High-Risk students.",
+        "• Send formal warning to all High-Risk students.",
         "• Implement a buddy system or study group for Moderate-Risk students.",
         "• Review session timings or material if specific days show consistently low turnout.",
         "• Congratulate and reward students maintaining >90% attendance to boost morale."
@@ -516,7 +516,7 @@ def style_workbook(output_bytes: bytes, has_unknown_ids: bool, generation_time: 
 # ══════════════════════════════════════════════════════════════
 # 7. APP HEADER
 # ══════════════════════════════════════════════════════════════
-st.title("🏫 Weekly Attendance Automator Pro")
+st.title("🏫 Weekly Attendance Automator")
 st.markdown(
     "Upload biometric `.dat` logs and a Names file → get a **fully graded, "
     "analytics-enriched Excel report** with charts, risk flags, weekly breakdowns, "
