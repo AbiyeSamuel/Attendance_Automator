@@ -862,7 +862,7 @@ if uploaded_files and names_file:
                     elif val == 'Low Risk':
                         return 'background-color: #D1FAE5; color: #065F46; font-weight: bold'
                     return ''
-                styled_review = review_display.style.applymap(color_risk, subset=['Risk Level'])\
+                styled_review = review_display.style.map(color_risk, subset=['Risk Level'])\
                     .format({'Overall_Performance_Num': '{:.1f}%'})\
                     .hide(axis=1, subset=['Overall_Performance_Num'])
                 st.dataframe(styled_review, use_container_width=True, height=400)
